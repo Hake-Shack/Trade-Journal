@@ -1547,9 +1547,13 @@ function renderHistory(){
     btn.addEventListener('click', async ()=>{
       const id = Number(btn.dataset.id);
       const t = trades.find(tr=>tr.id===id);
+      if(!t) return;
+      const pipsStr = (t.pips > 0 ? '+' : '') + t.pips + ' pips';
+      const detail = `${t.entry || 'Trade'}${t.instrument ? ' · ' + t.instrument : ''}\n${t.date}${t.time ? ' ' + t.time : ''}\n${pipsStr} · ${t.result}`;
+      if(!confirm(`Delete this trade?\n\n${detail}\n\nThis cannot be undone.`)) return;
       trades = trades.filter(tr=>tr.id!==id);
       await saveTrades();
-      if(t && t.hasImage){ await localDelete('img:'+id); }
+      if(t.hasImage){ await localDelete('img:'+id); }
       renderHistory();
       await checkAndAwardTrophies();
       renderChallenges();
@@ -2896,8 +2900,6 @@ function loadLogoImage(){
     img.crossOrigin = 'anonymous';
     img.onload = ()=>{ logoImageCache = img; resolve(img); };
     img.onerror = ()=>{
-      // CORS or load failure — don't taint the share-card canvas.
-      // Fall back to rendering without the logo.
       console.warn('Logo could not be loaded with CORS; share cards will render without it.');
       logoImageFailed = true;
       resolve(null);
